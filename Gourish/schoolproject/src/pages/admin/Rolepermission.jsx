@@ -26,7 +26,7 @@ const RoleManagement = () => {
   );
   const navigateToPermissions = (roleName, role_id) => {
     
-    navigate(`/admin/${roleName.toLowerCase()}-permission/${role_id}`);
+    navigate(`/admin/${roleName.toLowerCase()}-permission/${roleName}/${role_id}`);
   };
   const handleEditRole = (role) => {
     setSelectedRole(role);

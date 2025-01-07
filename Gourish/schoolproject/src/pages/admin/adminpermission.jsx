@@ -262,17 +262,19 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axiosApi from "../../api/axiosApi.jsx";
+
+
 const AssignPermission = () => {
-    const { roleName , role_id } = useParams(); // Retrieve role name from URL
-    const [permissions, setPermissions] = useState([]);
-    const [rolePermissions, setRolePermissions] = useState([]); // Role-specific permissions
-    
+
+  const { roleName, role_id } = useParams(); // Retrieve role name from URL
+  const [permissions, setPermissions] = useState([]);
+  const [rolePermissions, setRolePermissions] = useState([]); // Role-specific permissions
+
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         // Fetch all permission categories
         const response = await axiosApi.get("auth/perm/permission_cat");
-        console.log("API Response (Categories):", response.data);
 
         if (response.data.success) {
           setPermissions(response.data.data); // Set permission categories
@@ -286,19 +288,21 @@ const AssignPermission = () => {
         // Fetch permissions for the specific role_id
         if (role_id) {
           const resp = await axiosApi.get(`auth/perm/permission/${role_id}`);
-          console.log("API Response (Role-Based):", resp.data);
+
 
           if (resp.data.success) {
-            setRolePermissions(resp.data.data); // Set role-specific permissions
+            setRolePermissions(resp.data.data);
           } else {
             console.error(
               "Failed to fetch permissions (Role-Based):",
               resp.data.message
             );
+            setRolePermissions([]);
           }
         }
       } catch (error) {
         console.error("Error fetching permissions:", error.message);
+        setRolePermissions([]);
       }
     };
 
@@ -312,12 +316,27 @@ const AssignPermission = () => {
     const rolePerm = rolePermissions.find(
       (perm) => perm.permission_category_id === categoryId
     );
-    return rolePerm ? rolePerm[action] === 1 : false;
+    return rolePerm ? rolePerm[action] === 1 : false; // Return true if the action is enabled
   };
-    // console.log("permission", permissions)
+  
+
+    const handleCheckboxChange = (event, categoryId, action) => {
+      const isChecked = event.target.checked;
+    
+      setRolePermissions((prev) =>
+        prev.map((perm) =>
+          perm.permission_category_id === categoryId
+            ? { ...perm, [action]: isChecked ? 1 : 0 }
+            : perm
+        )
+      );
+    };
+    
+
+
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">{roleName} Assign Permissions</h1>
+            <h1 className="text-2xl font-bold mb-4">({roleName}) Assign Permissions</h1>
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
                 <table className="min-w-full border-collapse border border-gray-300">
                     <thead>
@@ -331,50 +350,102 @@ const AssignPermission = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {permissions.map((permission, index) => (
-                            
-                            <tr key={index} className="odd:bg-gray-100">
-                                <td className="border border-gray-300 px-4 py-2 font-bold">
-                                    {permission.module || "N/A"}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2">
-                                    {permission.name}
-                                </td>
-                                {/* Enable View Checkbox */}
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {permission.enable_view ? (
-                                        <input type="checkbox" className="w-4 h-4" />
-                                    ) : (
-                                        <span></span>
-                                    )}
-                                </td>
-                                {/* Enable Add Checkbox */}
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {permission.enable_add ? (
-                                        <input type="checkbox" className="w-4 h-4" />
-                                    ) : (
-                                        <span></span>
-                                    )}
-                                </td>
-                                {/* Enable Edit Checkbox */}
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {permission.enable_edit ? (
-                                        <input type="checkbox" className="w-4 h-4" />
-                                    ) : (
-                                        <span></span>
-                                    )}
-                                </td>
-                                {/* Enable Delete Checkbox */}
-                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                    {permission.enable_delete ? (
-                                        <input type="checkbox" className="w-4 h-4" />
-                                    ) : (
-                                        <span></span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
+                    {permissions.map((permission, index) => (
+                      <tr key={index} className="odd:bg-gray-100">
+                        <td className="border border-gray-300 px-4 py-2 font-bold">
+                          {permission.module || "N/A"}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {permission.name}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {permission.enable_view ? (
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4"
+                              checked={isPermissionEnabled(
+                                permission.permission_category_id,
+                                "can_view"
+                              )}
+                              onChange={(e) =>
+                                handleCheckboxChange(
+                                  e,
+                                  permission.permission_category_id,
+                                  "can_view"
+                                )
+                              }
+                            />
+                          ) : (
+                            <span></span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {permission.enable_add ? (
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4"
+                              checked={isPermissionEnabled(
+                                permission.permission_category_id,
+                                "can_add"
+                              )}
+                              onChange={(e) =>
+                                handleCheckboxChange(
+                                  e,
+                                  permission.permission_category_id,
+                                  "can_add"
+                                )
+                              }
+                            />
+                          ) : (
+                            <span></span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {permission.enable_edit ? (
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4"
+                              checked={isPermissionEnabled(
+                                permission.permission_category_id,
+                                "can_edit"
+                              )}
+                              onChange={(e) =>
+                                handleCheckboxChange(
+                                  e,
+                                  permission.permission_category_id,
+                                  "can_edit"
+                                )
+                              }
+                            />
+                          ) : (
+                            <span></span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {permission.enable_delete ? (
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4"
+                              checked={isPermissionEnabled(
+                                permission.permission_category_id,
+                                "can_delete"
+                              )}
+                              onChange={(e) =>
+                                handleCheckboxChange(
+                                  e,
+                                  permission.permission_category_id,
+                                  "can_delete"
+                                )
+                              }
+                            />
+                          ) : (
+                            <span></span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+
                 </table>
             </div>
             <div className="mt-4 flex justify-end">

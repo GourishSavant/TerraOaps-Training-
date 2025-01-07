@@ -304,7 +304,7 @@ const App = () => {
 
 
           <Route path="roles-permission" element={<RolesPermission />} />
-          <Route path="admin-permission/:role_id" element={<AdminPermission />} />
+          <Route path="admin-permission/:roleName/:role_id" element={<AdminPermission />} />
           <Route path="receptionist-permission" element={<ReceptionalistPermission />} />
           <Route path="accountant-permission" element={<AccountantPermission />} />
           <Route path="librarian-permission" element={<LibrarianPermission />} />
