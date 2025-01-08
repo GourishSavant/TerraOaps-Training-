@@ -223,7 +223,7 @@ const RoleManagement = () => {
               {filteredRoles.map((role) => (
                 <tr key={role.role_id} className="odd:bg-gray-100 dark:odd:bg-gray-700">
                   {columns.role && <td className="border-gray-300 px-4 py-2 text-left dark:border-gray-600 dark:text-white">{role.name}</td>}
-                  {columns.type && <td className="border-gray-300 px-4 py-2 dark:border-gray-600 dark:text-white">{role.type}</td>}
+                  {columns.type && <td className="border-gray-300 px-4 py-2 dark:border-gray-600 dark:text-white">{role.is_system? "System" : ""}</td>}
                   {columns.action && (
                     <td className="border-gray-300 px-4 py-2 flex justify-end space-x-4 dark:border-gray-600 dark:text-white">
                       <button

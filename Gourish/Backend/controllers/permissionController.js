@@ -365,7 +365,7 @@ export const bulkUpdatePermissionsForRoleById = async (req, res) => {
     // Map category names to their IDs
     const permissionUpdates = [];
     for (const permission of permissions) {
-      const permission_category_id = await UserModel.getPermissionCategoryIdByName(permission.name);
+      const permission_category_id = permission.permission_category_id;//await UserModel.getPermissionCategoryIdByName(permission.name);
       if (!permission_category_id) {
         return res.status(404).json({ error: `Permission category '${permission.name}' not found` });
       }

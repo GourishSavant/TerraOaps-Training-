@@ -75,7 +75,7 @@ import * as UserModel from '../models/userModel.js';
 
 export const createRole = async (req, res) => {
   try {
-    const { name, is_active=1, is_system=1, is_admin=0 } = req.body;
+    const { name, is_active=1, is_system=0, is_admin=0 } = req.body;
     if(name == "Admin"){
       is_admin = 1;
     }

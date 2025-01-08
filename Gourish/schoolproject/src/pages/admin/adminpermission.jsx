@@ -331,6 +331,33 @@ const AssignPermission = () => {
         )
       );
     };
+
+
+    const handleSavePermissions = async () => {
+      try {
+        // Prepare the payload for the API call
+        const payload = {
+          role_id,
+          permissions: rolePermissions,
+        };
+
+        console.log("payload", payload);
+  
+        // Send the updated permissions to the backend
+        const response = await axiosApi.put(`/auth/roles/permissions/${role_id}`, payload);
+        console.log("response", response);
+  
+        if (response.status == 200) {
+          alert("Permissions updated successfully!");
+        } else {
+          console.error("Failed to update permissions:", response.data.message);
+          
+        }
+      } catch (error) {
+        console.error("Error updating permissions:", error.message);
+        alert("An error occurred while updating permissions.");
+      }
+    };
     
 
 
@@ -449,7 +476,10 @@ const AssignPermission = () => {
                 </table>
             </div>
             <div className="mt-4 flex justify-end">
-                <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+                <button 
+                type="submit"
+                onClick={handleSavePermissions}
+                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
                     Save Permissions
                 </button>
             </div>
