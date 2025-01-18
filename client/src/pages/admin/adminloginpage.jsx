@@ -128,8 +128,12 @@ const AdminLoginPage = () => {
     const result = await dispatch(loginUser({ username, password }));
 
     if (result.meta.requestStatus === "fulfilled") {
+      const role_id = result.payload?.staff?.role_id; // Adjust based on your payload structure
+    if (role_id) {
+      localStorage.setItem("role_id", role_id);
       dispatch(fetchRolePermissions(role_id));
       navigate("/admin/dashboard");
+    }
     }
   };
 

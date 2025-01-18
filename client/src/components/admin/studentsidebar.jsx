@@ -6,11 +6,17 @@ import {
   FaChevronUp,
   FaPen,
   FaGripVertical,
+  FaHome, 
+  FaUser, 
+  FaCalendarAlt, 
+  FaBook,
 } from "react-icons/fa";
 
 const StudentSidebar = ({ isOpen }) => {
   const [isHovered, setIsHovered] = useState(false); // Sidebar hover state
   const [frontOfficeDropdownOpen, setFrontOfficeDropdownOpen] = useState(false); // Dropdown toggle state
+  // const [libaryDropdownOpen, setlibaryDropdownOpen] = useState(false); // Dropdown toggle state
+
   const [isEditingSession, setIsEditingSession] = useState(false); // Session edit toggle
   const [currentSession, setCurrentSession] = useState("2023-24"); // Current session
   const sessionOptions = ["2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24"]; // Session options
@@ -24,7 +30,6 @@ const StudentSidebar = ({ isOpen }) => {
     setCurrentSession(event.target.value);
     setIsEditingSession(false);
   };
-
   return (
     <div
       className={`bg-gray-600 text-white transition-all duration-300 h-screen dark:bg-slate-700 ${
@@ -89,6 +94,7 @@ const StudentSidebar = ({ isOpen }) => {
                 { to: "/admin/postal-receive", label: "Postal Receive" },
                 { to: "/admin/complaint", label: "Complaint" },
                 { to: "/admin/setup-frontoffice", label: "Setup Front Office" },
+                { name: "Dashboard", icon: <FaHome />, path: "/" },
               ].map(({ to, label }) => (
                 <li key={to}>
                   <Link
@@ -102,7 +108,45 @@ const StudentSidebar = ({ isOpen }) => {
             </ul>
           )}
         </li>
-      </ul>
+        <li>
+          <button
+            onClick={() => setFrontOfficeDropdownOpen(!frontOfficeDropdownOpen)}
+            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
+          >
+            <div className="flex items-center space-x-2">
+              <FaClipboardList className={`${iconClasses} text-blue-400`} />
+              {(isOpen || isHovered) && (
+                <span className="font-medium text-sm"></span>
+              )}
+            </div>
+            {(isOpen || isHovered) &&
+              (frontOfficeDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
+          </button>
+          {frontOfficeDropdownOpen && (
+            <ul className="ml-8 mt-1 space-y-1">
+              {[
+                { to: "/admin/admission-enquiry", label: "Admission Enquiry" },
+                { to: "/admin/visitor-books", label: "Visitor Books" },
+                { to: "/admin/phone-call", label: "Phone Call Log" },
+                { to: "/admin/postal-dispatch", label: "Postal Dispatch" },
+                { to: "/admin/postal-receive", label: "Postal Receive" },
+                { to: "/admin/complaint", label: "Complaint" },
+                { to: "/admin/setup-frontoffice", label: "Setup Front Office" },
+                { name: "Dashboard", icon: <FaHome />, path: "/" },
+              ].map(({ to, label }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className="block p-2 text-sm rounded hover:bg-gray-700"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+         </ul>
     </div>
   );
 };

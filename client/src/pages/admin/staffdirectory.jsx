@@ -37,20 +37,65 @@ import { fetchStaff } from '../../redux/slices/stafffSlice.jsx'; // Import the a
 import { FaEye, FaPen } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faList, faThList } from '@fortawesome/free-solid-svg-icons';
-
+import AdminSidebar from "../../components/admin/AdminSidebar.jsx";
+import { useParams } from 'react-router-dom'; // Import useParams hook
+import  fetchCategoryPermission  from '../../redux/slices/permissionSlice';
+import axiosApi from '../../api/axiosApi.jsx';
 const StaffManagement = () => {
   const [role, setRole] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [viewMode, setViewMode] = useState('card');
+  const { category_name } = useParams(); // Get role_id and category_name from URL params
+  const [canAdd, setCanAdd] = useState(0);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { data: staffData, loading } = useSelector((state) => state.staff);
+  // const { canAdd, loading: permissionLoading } = useSelector((state) => state.permissions);
+
+  const auth = useSelector((state) => state.auth);
+
+  const role_id = localStorage.getItem("role_id"); 
+
+  
 
   useEffect(() => {
     dispatch(fetchStaff());
-  }, [dispatch]);
+    if (auth?.role) {
+      setRole(auth.role); // Update state when auth.role changes
+  }
+  }, [dispatch, auth.role]);  
+
+  useEffect(() => {
+    // Fetch the canAdd permission based on role_id and category_name
+    fetchPermission(role_id, category_name);
+  }, [role_id, category_name]); // Re-run when role_id or category_name changes
+
+  const fetchPermission = async (role_id, category_name) => {
+    // Example API call to get canAdd permission
+    try {
+      console.log(category_name,"gtrju")
+      console.log(role_id ,"role_id je")
+      const response = await axiosApi.get(`/auth/permission-category/${category_name}/id/${role_id}`);
+      console.log(response ,"hhhh")
+      console.log(response.data.canAdd ,"kkk")
+      if (response.data.success) {
+        setCanAdd(response.data.canAdd); // Set the canAdd permission from the response
+      } else {
+        setCanAdd(0); // Default to 0 if no permission is found
+      }
+    } catch (error) {
+      console.error('Error fetching permission:', error);
+      setCanAdd(0); // Default to 0 on error
+    }
+  };
+
+  // //Fetch category permission (canAdd)
+  // useEffect(() => {
+  //   dispatch(fetchCategoryPermission({ role_id, name: category_name }));
+  // }, [dispatch, role_id, category_name]);
+
 
   const filteredStaff = staffData.filter(
     (staff) =>
@@ -63,6 +108,7 @@ const StaffManagement = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
+   
       <div className="bg-white dark:bg-gray-800 shadow-md p-4 rounded-md">
         <h1 className="text-2xl font-bold mb-6">Staff Management</h1>
 
@@ -106,14 +152,23 @@ const StaffManagement = () => {
           {/* Search and Add Staff */}
           <div className="flex items-center gap-4">
            
-            <button 
+            {/* <button 
               type="button"
               className="px-6 py-2 bg-green-500 text-white font-semibold rounded shadow hover:bg-green-600 transition"
               onClick={() => navigate('/admin/staff/create')} // Navigate to create staff page
             >
               + Add Staff
-            </button>
+            </button> */}
           </div>
+          {canAdd === 1 && (
+  <button
+    type="button"
+    className="px-6 py-2 bg-green-500 text-white font-semibold rounded shadow hover:bg-green-600 transition"
+    onClick={() => navigate("/admin/staff/create")}
+  >
+    + Add Staff
+  </button>
+)}
 {/*           
                     <div className="flex items-center gap-4">
             {can_add === 1 && ( // Check if can_add permission is 1
@@ -155,7 +210,7 @@ const StaffManagement = () => {
             {staff.first_name.split(' ').map((word) => word[0]).join('')}
           </div>
           <h3 className="text-xl font-semibold text-center">{staff.first_name} {staff.last_name}</h3>
-          <p className="text-sm text-center">Role: {staff.role}</p>
+          <p className="text-sm text-center">Role: {staff.role_name}</p>
           <p className="text-sm text-center">Staff ID: {staff.staff_id}</p>
           <p className="text-sm text-center">Phone: {staff.phone_no}</p>
 
@@ -195,7 +250,7 @@ const StaffManagement = () => {
                       <tr key={staff.id}>
                         <td className="px-4 py-2 border-b">{staff.staff_id}</td> {/* Ensure correct field */}
                         <td className="px-4 py-2 border-b">{staff.first_name} {staff.last_name}</td> {/* Full name */}
-                        <td className="px-4 py-2 border-b">{staff.role}</td>
+                        <td className="px-4 py-2 border-b">{staff.role_name}</td>
                         <td className="px-4 py-2 border-b">{staff.department}</td>
                         <td className="px-4 py-2 border-b">{staff.designation}</td>
                         <td className="px-4 py-2 border-b">{staff.phone_no}</td> {/* Ensure correct field */}
@@ -220,9 +275,6 @@ const StaffManagement = () => {
               </div>
             )}
           </div>
-
-
-        
       </div>
     </div>
     

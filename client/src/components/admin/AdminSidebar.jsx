@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import { Link } from "react-router-dom";
 import DarkModeToggle from "./DarkModeToggle";
 import UniversityName from "../../assets/admin/universityName.png";
 import { useModuleContext } from "../../Context/ModuleContext"; // Correct relative path
-
+import { useDispatch, useSelector } from "react-redux";
+import {fetchPermissions} from "../common/Sidebar/EnabledFeatures.jsx"
+import { useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaUserAlt,
+  
   FaCalendarAlt,
   FaUserTie,
   FaBook,
@@ -38,70 +41,26 @@ import {
   FaLink,
   FaGripVertical,
 } from "react-icons/fa";
+import axios from '../../api/axiosApi.jsx'
 
 
-const Sidebar = ({ isOpen }) => {
-  const [isQuickLinksOpen, setIsQuickLinksOpen] = useState(false); // State to toggle Quick Links visibility
+const Sidebar = ({ isOpen, menuItems, visibleGroups, toggleGroupVisibility })  => {
+  // const [isQuickLinksOpen, setIsQuickLinksOpen] = useState(false); // State to toggle Quick Links visibility
   const [isHovered, setIsHovered] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  const [frontOfficeDropdownOpen, setFrontOfficeDropdownOpen] = useState(false);
-  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
-  const [studentInfoDropdownOpen, setStudentInfoDropdownOpen] = useState(false);
-  const [feesCollectionDropdownOpen, setFeesCollectionDropdownOpen] = useState(false);
-  const [examinationDropdownOpen, setExaminationDropdownOpen] = useState(false); // Examination dropdown state
-  const [libraryDropdownOpen, setLibraryDropdownOpen] = useState(false); // Library dropdown state
-  const [systemSettingsDropdownOpen, setSystemSettingsDropdownOpen] = useState(false); // System Settings dropdown state
-  const [communicateDropdownOpen, setCommunicateDropdownOpen] = useState(false);
-  const [expensesDropdownOpen, setExpensesDropdownOpen] = useState(false);
-  const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
-  const [humanresourceDropdownOpen, setHumanResourceDropdownOpen] = useState(false);
-  const [incomeDropdownOpen, setIncomeDropdownOpen] = useState(false);
-  const [onlineExaminationDropdownOpen, setOnlineExaminationDropdownOpen] = useState(false);
-  const [attendanceDropdownOpen, setAttendanceDropdownOpen] = useState(false);
-  const [academicsDropdownOpen, setAcademicsDropdownOpen] = useState(false);
-  const [alumniDropdownOpen, setalumniDropdownOpen] = useState(false);
-  const [lessonplanDropdownOpen, setlessonplanDropdownOpen] = useState(false);
-  const [frontcmsDropdownOpen, setfrontcmsDropdownOpen] = useState(false);
-  const [addhomeworkDropdownOpen, setaddhomeworkDropdownOpen] = useState(false);
-  const { enabledItems } = useModuleContext();
-
-  // State for Current Session
+ 
   const [currentSession, setCurrentSession] = useState("2018-19");
-  const [editedSession, setEditedSession] = useState(currentSession);
+
   const [isEditingSession, setIsEditingSession] = useState(false); // Toggle edit mode for session
+
   const sessionOptions = ['2018-19', '2019-20', '2020-21', '2021-22', '2022-23', '2023-24']; // Available session years
 
   const iconClasses = "text-lg";
 
-  // Handlers for hover
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => setIsHovered(false);
-
-  // Handler to toggle mobile sidebar
-  const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
-
-  // Toggle the dropdowns
-  const toggleFrontOfficeDropdown = () => setFrontOfficeDropdownOpen(!frontOfficeDropdownOpen);
-  const toggleAdminDropdown = () => setAdminDropdownOpen(!adminDropdownOpen);
-  const toggleStudentInfoDropdown = () => setStudentInfoDropdownOpen(!studentInfoDropdownOpen);
-  const toggleFeesCollectionDropdown = () => setFeesCollectionDropdownOpen(!feesCollectionDropdownOpen);
-  const toggleExaminationDropdown = () => setExaminationDropdownOpen(!examinationDropdownOpen);
-  const toggleLibraryDropdown = () => setLibraryDropdownOpen(!libraryDropdownOpen);
-  const toggleSystemSettingsDropdown = () => setSystemSettingsDropdownOpen(!systemSettingsDropdownOpen);
-  const toggleCommunicateDropdown = () => setCommunicateDropdownOpen(!communicateDropdownOpen);
-  const toggleExpensesDropdown = () => setExpensesDropdownOpen(!expensesDropdownOpen);
-  const toggleReportsDropdown = () => setReportsDropdownOpen(!reportsDropdownOpen);
-  const toggleHumanResourceDropdown = () => setHumanResourceDropdownOpen(!humanresourceDropdownOpen);
-  const toggleIncomeDropdown = () => setIncomeDropdownOpen(!incomeDropdownOpen);
-  const toggleOnlineExaminationDropdown = () => setOnlineExaminationDropdownOpen(!incomeDropdownOpen);
-  const toggleAcademicsDropdown = () => setAcademicsDropdownOpen(!academicsDropdownOpen);
-  const toggleAttendanceDropdown = () => setAttendanceDropdownOpen(!attendanceDropdownOpen);
-  const toggleAlumniDropdown = () => setalumniDropdownOpen(!alumniDropdownOpen);
-  const toggleLessonPlanDropdown = () => setlessonplanDropdownOpen(!lessonplanDropdownOpen);
-  const toggleFrontCMSDropdown = () => setfrontcmsDropdownOpen(!frontcmsDropdownOpen);
-  const toggleaddhomeworkDropdown = () => setaddhomeworkDropdownOpen(!addhomeworkDropdownOpen);
-
+// .........................................
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null); // Track clicked category
+  const { rolePermissions = [] } = useSelector((state) => state.permissions); // Permissions from Redux
+// .....................................
+ const navigate = useNavigate();
   const toggleQuickLinks = () => {
     setIsQuickLinksOpen(!isQuickLinksOpen); // Toggle Quick Links visibility
   };
@@ -110,8 +69,402 @@ const Sidebar = ({ isOpen }) => {
     setCurrentSession(editedSession);
     setIsEditingSession(false); // Stop editing after saving
   };
+// .............................................
+
+    // Check if a category has a specific permission
+    const hasPermission = (categoryId, action) => {
+      const permission = rolePermissions.find(
+        (perm) => perm.permission_category_id === categoryId
+      );
+      return permission?.[action] === 1;
+    };
+  
+    // Handle category click
+    const handleCategoryClick = (category_name) => {
+      console.log(category_name,"cat")
+      setSelectedCategoryId(category_name);
+      navigate(`/admin/${category_name}`); 
+    };
+  // ..........................................
+
+  const categoryLinks = {
+    Student:"/admin/student-details",
+  // "Import Student":"",
+  // Student Categories:
+  // Student Houses:
+  // Disable Student:
+  // Student Timeline:
+  // Disable Reason:
+  // Collect Fees:
+  // Fees Carry Forward:
+  // Fees Master:
+  // Fees Group:
+  // Fees Group Assign:
+  // Fees Type:
+  // Fees Discount:
+  // Fees Discount Assign:
+  // Search Fees Payment:
+  // Search Due Fees:
+  // Fees Reminder:
+  // Offline Bank Payments:
+  // Income:
+  // Income Head:
+  // Search Income:
+  // Expense:
+  // Expense Head:
+  // Search Expense:
+  // Student / Period Attendance:
+  // Attendance By Date:
+  // Approve Leave:
+  // Marks Grade:
+  // Exam Group:
+  // Design Admit Card:
+  // Print Admit Card:
+  // Design Marksheet:
+  // Print Marksheet:
+  // Exam Result:
+  // Marks Import:
+  // Exam:
+  // Exam Publish:
+  // Link Exam:
+  // Assign / View student:
+  // Exam Subject:
+  // Exam Marks:
+  // Marks Division:
+  // Exam Schedule:
+  // Generate Rank:
+  // Class Timetable:
+  // Subject:
+  // Class:
+  // Section:
+  // Promote Student:
+  // Assign Class Teacher:
+  // Teachers Timetable:
+  // Subject Group:
+  // Upload Content:
+  // Content Type:
+  // Content Share List:
+  // Video Tutorial:
+  // Books List:
+  // Issue Return:
+  // Add Staff Member:
+  // Add Student:
+  // Import Book:
+  // Notice Board:
+  // Email:
+  // Email / SMS Log:
+  // SMS:
+  // Schedule Email SMS Log:
+  // Login Credentials Send:
+  // Email Template:
+  // SMS Template:
+  // Student Report:
+  // Guardian Report:
+  // Student History:
+  // Student Login Credential Report:
+  // Class Subject Report:
+  // Admission Report:
+  // Sibling Report:
+  // Homework Evaluation Report:
+  // Student Profile:
+  // Fees Statement:
+  // Balance Fees Report:
+  // Fees Collection Report:
+  // Online Fees Collection Report:
+  // Income Report:
+  // Expense Report:
+  // PayRoll Report:
+  // Income Group Report:
+  // Expense Group Report:
+  // Attendance Report:
+  // Staff Attendance Report:
+  // Audit Trail Report:
+  // User Log:
+  // Book Issue Report:
+  // Book Due Report:
+  // Student Attendance Type Report:
+  // Exam Marks Report:
+  // Online Exam Wise Report:
+  // Online Exams Report:
+  // Online Exams Attempt Report:
+  // Online Exams Rank Report:
+  // Staff Report:
+  // Student / Period Attendance Report:
+  // Biometric Attendance Log:
+  // Book Issue Return Report:
+  // Rank Report:
+  // Syllabus Status Report:
+  // Teacher Syllabus Status Report:
+  // Alumni Report:
+  // Student Gender Ratio Report:
+  // Student Teacher Ratio Report:
+  // Daily Attendance Report:
+  // Balance Fees Report With Remark:
+  // Balance Fees Statement:
+  // Daily Collection Report:
+  // Languages:
+  // General Setting:
+  // Session Setting:
+  // Notification Setting:
+  // SMS Setting:
+  // Email Setting:
+  // Front CMS Setting:
+  // Payment Methods:
+  // User Status:
+  // Backup:
+  // Restore:
+  // Language Switcher:
+  // Custom Fields:
+  // System Fields:
+  // Print Header Footer:
+  // Student Profile Update:
+  // Sidebar Menu:
+  // Currency:
+  // Currency Switcher:
+  // Menus:
+  // Media Manager:
+  // Banner Images:
+  // Pages:
+  // Gallery:
+  // Event:
+  // News:
+  // Admission Enquiry:
+  // Follow Up Admission Enquiry:
+  // Visitor Book:
+  // Phone Call Log:
+  // Postal Dispatch:
+  // Postal Receive:
+  // Complain:
+  // Setup Font Office:
+   Staff:"/admin/staff-directory",
+  // Disable Staff:
+  // Staff Attendance:
+  // Staff Payroll:
+  // Approve Leave Request:
+  // Apply Leave:
+  // Leave Types:
+  // Department:
+  // Designation:
+  // Can See Other Users Profile:
+  // Staff Timeline:
+  // Teachers Rating:
+  // Homework:
+  // Homework Evaluation:
+  // Daily Assignment:
+  // Student Certificate:
+  // Generate Certificate:
+  // Student ID Card:
+  // Generate ID Card:
+  // Staff ID Card:
+  // Generate Staff ID Card:
+  // Calendar To Do List:
+  // Quick Session Change:
+  // Fees Collection And Expense Monthly Chart:
+  // Fees Collection And Expense Yearly Chart:
+  // Monthly Fees Collection Widget:
+  // Monthly Expense Widget:
+  // Student Count Widget:
+  // Staff Role Count Widget:
+  // Fees Awaiting Payment Widegts:
+  // Conveted Leads Widegts:
+  // Fees Overview Widegts:
+  // Enquiry Overview Widegts:
+  // Library Overview Widegts:
+  // Student Today Attendance Widegts:
+  // Income Donut Graph:
+  // Expense Donut Graph:
+  // Staff Present Today Widegts:
+  // Student Present Today Widegts:
+  // Online Examination:
+  // Question Bank:
+  // Add Questions in Exam:
+  // Assign / View Student:
+  // Import Question:
+  // Chat:
+  // Multi Class Student:
+  // Online Admission:
+  // Manage Alumni:
+  // Events:
+  // Manage Lesson Plan:
+  // Manage Syllabus Status:
+  // Lesson:
+  // Topic:
+  // Comments:
+  // Copy Old Lessons:
+  };
+  
+//   useEffect(() => {
+//     const getPermissions = async () => {
+//         if (!role_id) {
+//             setError('Role ID is missing.');
+//             return;
+//         }
+
+//         try {
+//             console.log("Before fetching DB", role_id);
+//             const response = await axios.get(`/auth/perm/permission/feature/${role_id}`);
+//             console.log("After fetching DB", response);
+
+//             const permissions = response.data.feature; // Extract the 'feature' array
+//             if (Array.isArray(permissions)) {
+//                 // Group permissions by permission group
+//                 const groupedPermissions = permissions.reduce((acc, permission) => {
+//                     // Group by permission group short code
+//                     const groupKey = permission.group_short_code;
+//                     if (!acc[groupKey]) {
+//                         acc[groupKey] = {
+//                             group_short_code: groupKey,
+//                             group_name: permission.group_name,
+//                             categories: [],
+//                         };
+//                     }
+
+//                     // Push category data into the respective group
+//                     acc[groupKey].categories.push({
+//                         category_short_code: permission.category_short_code,
+//                         category_name: permission.category_name,
+//                         can_view: permission.can_view,
+//                         can_add: permission.can_add,
+//                         can_edit: permission.can_edit,
+//                         can_delete: permission.can_delete,
+//                     });
+
+//                     return acc;
+//                 }, {});
+
+//                 // Convert the grouped object into an array
+//                 setMenuItems(Object.values(groupedPermissions));
+//             } else {
+//                 setError('Invalid response format');
+//                 console.error('Permissions data is not an array:', permissions);
+//             }
+//         } catch (err) {
+//             setError('Failed to fetch permissions');
+//             console.error(err);
+//         }
+//     };
+
+//     getPermissions();
+// }, [role_id]); // Run effect when role_id changes
+
+// // Handle loading state or error
+// if (error) {
+//     return <p>Error: {error}</p>;
+// }
+
+// if (menuItems.length === 0) {
+//     return <p>Loading permissions...</p>;
+// }
+// const toggleGroupVisibility = (groupShortCode) => {
+//   setVisibleGroups((prev) => ({
+//       ...prev,
+//       [groupShortCode]: !prev[groupShortCode], // Toggle visibility of this group
+//   }));
+// };
 
 
+
+
+function getGroupIcon(shortCode) {
+  switch (shortCode) {
+      case 'front_office':
+          return (
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+              >
+                  <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16m-7 6h7"
+                  />
+              </svg>
+          );
+      case 'student_information':
+          return (
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+              >
+                  <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                  />
+              </svg>
+          );
+      case 'income':
+          return (
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+              >
+                  <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01m-6.938 4h13.856C18.54 19.776 20 16.512 20 12c0-4.512-1.46-7.776-4.082-8H7.082C4.46 4.224 3 7.488 3 12c0 4.512 1.46 7.776 4.082 8z"
+                  />
+              </svg>
+          );
+      // Add more cases for other groups...
+      default:
+          return <span>?</span>;
+  }
+}
+
+function getCategoryIcon(shortCode) {
+  switch (shortCode) {
+      case 'attendance':
+          return (
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+              >
+                  <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h11m4 0h4m-8 10h6m-8-4h8m-8-6h8m-8-4h6"
+                  />
+              </svg>
+          );
+      case 'library':
+          return (
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+              >
+                  <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 20h9m-9-4h6m-6-4h3M6 16h.01M6 20h.01M6 12h.01M6 8h.01M6 4h.01M4 6h16M4 10h16M4 14h16M4 18h16"
+                  />
+              </svg>
+          );
+      // Add more cases for other categories...
+      default:
+          return <span>?</span>;
+  }
+}
 
   return (
     <div
@@ -495,1299 +848,101 @@ const Sidebar = ({ isOpen }) => {
           </div>
         </li>
 
+       
 
-
-
-
-        {/* Front Office Dropdown */}
-
-        <li>
-          <button
-            onClick={() => setFrontOfficeDropdownOpen(!frontOfficeDropdownOpen)}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaClipboardList className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && (
-                <span className="font-medium text-sm">Front Office</span>
-              )}
-            </div>
-            {(isOpen || isHovered) &&
-              (frontOfficeDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {frontOfficeDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/admission-enquiry"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Admission Enquiry
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/visitor-books"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Visitor Books
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/phone-call"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Phone Call Log
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/postal-dispatch"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  postal Dispatch
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/postal-receive"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Postal Receive
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/complaint"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Complaint
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/setup-frontoffice"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Setup Front Office
-                </Link>
-              </li>
+    {/* return ( */}
+        {/* <aside className="sidebar">
+            <ul>
+                {menuItems.map((item) => (
+                    item.can_view && (
+                        <li key={item.category_short_code}>
+                            <a href={`/${item.category_short_code}`}>
+                                {item.category_name}
+                            </a>
+                        </li>
+                    )
+                ))}
             </ul>
-          )}
-        </li>
-
-
-
-        {/* Student Information Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleStudentInfoDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaUserAlt className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Student Information</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (studentInfoDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {studentInfoDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              {/* {showStudent &&} */}
-                <li>
-                  <Link
-                    to="/admin/student-details"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Student Details
-                  </Link>
-                </li>
-              
-              <li>
-                <Link
-                  to="/admin/student-admission"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Student Admission
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/online-admission"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Online Admission
-                </Link>
-              </li>
-              {/* {showDisableStudent &&} */}
-              <li>
-                <Link
-                  to="/admin/disable-student"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Disable Student
-                </Link>
-              </li>
-  
-              <li>
-                <Link
-                  to="/admin/multiclass-student"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Multi Class Student
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/bulk-delete"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Bulk Delete
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/student-categories"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Student Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/disable-reason"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Disable Reason
-                </Link>
-              </li>
-              {/* {showStudentHouses &&} */}
-                <li>
-                  <Link
-                    to="/admin/student-house"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Student House
-                  </Link>
-                </li>
-              
-            </ul>
-          )}
-        </li>
-
-        {/* Fees Collection Dropdown */}
-        {enabledItems.System["Fees Collection"] &&
-
-          <li>
-            <button
-              onClick={toggleFeesCollectionDropdown}
-              className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
+        </aside> */}
+<aside className="sidebar p-4 bg-gray-800 w-64 h-screen text-white">
+    {menuItems.map((group) => (
+        <div key={group.group_short_code} className="mb-4">
+            {/* Group Name with Unique Icon and Dropdown */}
+            <h3
+                className="text-md font-semibold cursor-pointer p-2 bg-gray-700 rounded-md hover:bg-gray-600 flex items-center"
+                onClick={() => toggleGroupVisibility(group.group_short_code)}
             >
-              <div className="flex items-center space-x-2">
-                <FaUserAlt className={`${iconClasses} text-blue-400`} />
-                {(isOpen || isHovered) && <span className="font-medium text-sm">Fees Collection</span>}
-              </div>
-              {(isOpen || isHovered) &&
-                (feesCollectionDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-            </button>
-            {feesCollectionDropdownOpen && (
-              <ul className="ml-8 mt-1 space-y-1">
-                <li>
-                  <Link
-                    to="/admin/collect-fees"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Collect Fees
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/offline-payment"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Offline Bank Payments
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/search-payment"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Search Fees Payment
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/due-fees"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Search Due Fees
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/fee-group"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Fees Group
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/fees-master"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Fees Master
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/fee-type"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Fees Type
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/fees-discount"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Fees Discount
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/fees-reminder"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Fees reminder
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/fees-carry"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Fees Carry Forward
-                  </Link>
-                </li>
-              </ul>
+                {/* Group Icon */}
+                <span className="mr-3">
+                    {getGroupIcon(group.group_short_code)}
+                </span>
+
+                {/* Group Name */}
+                <span className="flex-grow">{group.group_name}</span>
+
+                {/* Dropdown Toggle: `^` */}
+                <span
+                    className={`transform transition-transform ${
+                        visibleGroups[group.group_short_code] ? 'rotate-180' : ''
+                    }`}
+                >
+                    ^
+                </span>
+            </h3>
+
+            {/* Dropdown Menu for Subcategories */}
+            {visibleGroups[group.group_short_code] && (
+                <ul className="ml-4 mt-2 space-y-1">
+                    {group.categories.map(
+                        (category) =>
+                            category.can_view && (
+                                // <li
+                                //     key={category.category_short_code}
+                                //     className="p-2 hover:bg-gray-600 rounded-md"
+                                // >
+                                //     {/* Subcategory Link */}
+                                //     <a
+                                //         href={
+                                //             categoryLinks[category.category_short_code] ||
+                                //             "#"
+                                //         }
+                                //         className="flex items-center text-sm text-gray-300 hover:text-white"
+                                //     >
+                                //         {/* Subcategory Icon */}
+                                //         <span className="mr-3">
+                                //             {getCategoryIcon(
+                                //                 category.category_short_code
+                                //             )}
+                                //         </span>
+
+                                //         {/* Subcategory Name */}
+                                //         {category.category_name}
+                                //     </a>
+                                // </li>
+                                <li
+                                key={category.category_short_code}
+                                className="p-2 hover:bg-gray-600 rounded-md"
+                              >
+                                <button
+                                  onClick={() => handleCategoryClick(category.category_short_code)}
+                                  className="flex items-center text-sm text-gray-300 hover:text-white w-full text-left"
+                                >
+                                  <span className="mr-3">📄</span>
+                                  {category.category_name}
+                                </button>
+                              </li>
+                            )
+                    )}
+                </ul>
             )}
-          </li>
-        }
-        {/* income dropdown */}
-
-        <li>
-          <button
-            onClick={toggleIncomeDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaDollarSign className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Income</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (incomeDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {incomeDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/add-income"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Add Income
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/search-income"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Search Income
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/income-head"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Income Head
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
+        </div>
+    ))}
+</aside>
 
 
-        {/* Academics Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleAcademicsDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaChalkboardTeacher className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Academics</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (academicsDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {academicsDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/class-timetable"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Class Timetable
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/assign-classteacher"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Assign Class Teacher
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/teacher-timetable"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Teacher Timetable
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/promote-students"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Promote Students
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/Subject-group"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Subject Group
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/subjects"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Subjects
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/class"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Class
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/Sections"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Sections
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* Attendance Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleAttendanceDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaCalendarAlt className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Attendance</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (attendanceDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {attendanceDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/student-attendance"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Student Attendance
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/approve-leaves"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Approve Leave
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/attendence-bydate"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Attendence By date
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* Examination Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleExaminationDropdown} // Toggle the Examination dropdown
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaChalkboardTeacher className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Examination</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (examinationDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {examinationDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/exam-group"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Exam Group
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/exam-schedule"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Exam Schedule
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/exam-result"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Exam Result
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/design-admitcard"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Design Admit Card
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/print-admitcard"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Print Admit Card
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/design-marksheet"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Design Marksheet
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/print-marksheet"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Print Marksheet
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/marks-grade"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Marks Grade
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/marks-division"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Marks Division
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* Library Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleLibraryDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaBook className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Library</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (libraryDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {libraryDropdownOpen && (
-            <ul className="ml-6 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/book-list"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Book List
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/issue-return"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Issue-Return
-                </Link>
-                <li>
-                  <Link
-                    to="/admin/add-student"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Add Student
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/admin/add-staffmember"
-                    className="block p-2 text-sm rounded hover:bg-gray-700"
-                  >
-                    Add staff Member
-                  </Link>
-                </li>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* Communicate Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleCommunicateDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaComments className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Communicate</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (communicateDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {communicateDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link to="/admin/compose" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Notice Board
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/send-email" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Send Email
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/send-sms" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Send SMS
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/login-credential" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Login Credentials Send
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/email-sms" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Email / SMS Log
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/schedule-emailsms" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Schedule Email SMS Log
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/email-template" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Email Template
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/sms-template" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  SMS Template
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        <li>
-          <button
-            onClick={toggleaddhomeworkDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaUserAlt className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Homeworks</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (addhomeworkDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {addhomeworkDropdownOpen && (
-            <ul className="ml-8 mt-2 space-y-2">
-              <li>
-
-                <Link
-                  to="/admin/addhomework"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                 Add Homework
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/dailyassignment"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Daily Assignment
-                </Link>
-              </li>
-             
-            </ul>
-          )}
-        </li>
-        <li>
-          <button
-            onClick={toggleLessonPlanDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaBook className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">LessonPlan</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (lessonplanDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {lessonplanDropdownOpen && (
-            <ul className="ml-8 mt-2 space-y-2">
-              <li>
-                <Link
-                  to="/admin/ManageLessonPlan"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >Manage Lesson Plan
-                  
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/copyoldlesson"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Copy Old Lesson
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/managesyllabusstatus"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Manage Syllabus Status
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/lesson"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Lesson
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/Topic"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Topic
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-            <li>
-          <button
-            onClick={toggleAlumniDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaComments className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Alumni</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (alumniDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {alumniDropdownOpen && (
-            <ul className="ml-8 mt-2 space-y-2">
-              <li>
-                <Link to="/admin/managealumni" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Manage Alumni
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/event" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Events
-                </Link>
-              </li>
-              
-            </ul>
-          )}
-            </li>
-
-            <li>
-          <button
-            onClick={toggleFrontCMSDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaBook className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Front CMS</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (frontcmsDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {frontcmsDropdownOpen && (
-            <ul className="ml-8 mt-2 space-y-2">
-              <li>
-                <Link
-                  to="/admin/EventList"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >EventList
-                  
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/gallery"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Galleary
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/menu"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Menu
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/MediaManager"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Media Manager
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/pages"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Pages
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/News"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  News
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/BannerImage"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Banner Images
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-        {/* Expenses Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleExpensesDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaMoneyBill className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Expenses</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (expensesDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {expensesDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link to="/admin/add-expense" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Add Expense
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/search-expense" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Search Expense
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/expense-head" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Expense Head
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-
-
-
-        {/* Online Exam Dropdown */}
-
-        <li>
-          <button
-            onClick={() => setOnlineExaminationDropdownOpen(!onlineExaminationDropdownOpen)} // Toggle dropdown visibility
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaClipboardList className={`${iconClasses} text-blue-400`} /> {/* Icon for Online Exams */}
-              <span className="font-medium text-sm">Online Examinations</span> {/* Title */}
-            </div>
-            {onlineExaminationDropdownOpen ? <FaChevronUp /> : <FaChevronDown />} {/* Toggle icon */}
-          </button>
-
-          {/* Dropdown content */}
-          {onlineExaminationDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link to="/admin/online-exams" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Online Exams {/* Link for Online Exams */}
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/question-bank" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Question Bank {/* Link for Question Bank */}
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-
-        {/* Human Resource dropdown */}
-
-
-        <li>
-          <button
-            onClick={() => setHumanResourceDropdownOpen(!humanresourceDropdownOpen)}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaUsers className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Human Resource</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (humanresourceDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {humanresourceDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link to="/admin/staff-directory" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Staff Directory
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/staff-attendence" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Staff Attendence
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/payroll" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Payroll
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/aprove-leave" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Approve Leave Request
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/apply-leave" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Apply Leave
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/leave-type" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Leave Type
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/teachers-rating" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Teachers Rating
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/department" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Department
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/designation" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Designation
-                </Link>
-
-              </li>
-              <li>
-                <Link to="/admin/disabled-staff" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Disabled Staff
-                </Link>
-
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* Reports Dropdown */}
-
-        <li>
-          <button
-            onClick={() => setReportsDropdownOpen(!reportsDropdownOpen)} // Toggle the Reports dropdown
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaClipboardList className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">Reports</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (reportsDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {reportsDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link to="/admin/student-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Student Information
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/finance-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Finance
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/attendance-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Attendance
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/examinations-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Examinations
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/onlineexam-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Online Examinations
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/humanresource-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Human Resource
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/homework-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Homework
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/library-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Library
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/alumni-reports" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  Alumni
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/user-log" className="block p-2 text-sm rounded hover:bg-gray-700">
-                  User Log
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-
-        {/* System Settings Dropdown */}
-
-        <li>
-          <button
-            onClick={toggleSystemSettingsDropdown}
-            className="flex items-center justify-between w-full p-2 rounded hover:bg-gray-700"
-          >
-            <div className="flex items-center space-x-2">
-              <FaCogs className={`${iconClasses} text-blue-400`} />
-              {(isOpen || isHovered) && <span className="font-medium text-sm">System Settings</span>}
-            </div>
-            {(isOpen || isHovered) &&
-              (systemSettingsDropdownOpen ? <FaChevronUp /> : <FaChevronDown />)}
-          </button>
-          {systemSettingsDropdownOpen && (
-            <ul className="ml-8 mt-1 space-y-1">
-              <li>
-                <Link
-                  to="/admin/General-settings"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  General Settings
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/session-settings"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Session setting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/notification-setting"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Notification Setting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/email-setting"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Email Setting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/sms-setting"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  SMS Setting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/payment-method"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Payment Methods
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/print-header"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Print Header Footer
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/email-setting"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Front CMS Setting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/langu-ages"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Language
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/roles-permission"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Roles Permssion
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/us-ers"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Users
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/backup-restore"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Backup Restore
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/currency"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Currency
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/modules"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Modules
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/custom-field"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Custom fields
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/system-fields"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  System fields
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/captcha-setting"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Captcha Setting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/system-fields"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Users
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/profile-update"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Student profile Update
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/online-admissions"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Online Admission
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/files-types"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Files Types
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/sidebar-menu"
-                  className="block p-2 text-sm rounded hover:bg-gray-700"
-                >
-                  Sidebar Menu
-                </Link>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* Other Sidebar Items */}
-        {[
-
-        ].map(({ to, label, icon }) => (
-          <li key={to}>
-            <Link
-              to={to}
-              className="flex items-center space-x-2 p-2 text-sm rounded hover:bg-gray-700"
-            >
-              <span className={`${iconClasses} text-green-800`}>{icon}</span>
-              {(isOpen || isHovered) && <span className="font-medium text-sm">{label}</span>}
-            </Link>
-          </li>
-
-
-        ))}
 
       </ul>
     </div>
-
-
-
   );
 };
 

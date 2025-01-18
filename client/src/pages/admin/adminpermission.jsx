@@ -78,7 +78,6 @@
 //         alert("An error occurred while updating permissions.");
 //       }
 //     };
-
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -88,28 +87,30 @@ import {
   saveRolePermissions,
   updatePermission,
 } from "../../redux/slices/permissionSlice.jsx";
-
 const AssignPermission = () => {
   const { roleName, role_id } = useParams();
   const dispatch = useDispatch();
   const { permissions, rolePermissions, loading } = useSelector(
     (state) => state.permissions
   );
-
+//   console.log("permission", permissions)
   useEffect(() => {
     dispatch(fetchPermissions());
     if (role_id) {
+        console.log(role_id,"hh")
       dispatch(fetchRolePermissions(role_id));
+      console.log("hjk")
     }
   }, [dispatch, role_id]);
-
   const isPermissionEnabled = (categoryId, action) => {
+    // console.log(categoryId,"ctegory id ")
+
     const rolePerm = rolePermissions.find(
       (perm) => perm.permission_category_id === categoryId
     );
+    // console.log(rolePerm," ghjjklffhis")
     return rolePerm ? rolePerm[action] === 1 : false;
   };
-
   const handleCheckboxChange = (event, categoryId, action) => {
     dispatch(
       updatePermission({
@@ -119,9 +120,10 @@ const AssignPermission = () => {
       })
     );
   };
-
   const handleSavePermissions = () => {
     dispatch(saveRolePermissions({ roleId: role_id, permissions: rolePermissions }));
+
+    console.log(role_id , rolePermissions ,"save daat check ")
   };
     return (
         <div className="container mx-auto p-4">
@@ -140,9 +142,9 @@ const AssignPermission = () => {
                     </thead>
                         <tbody>
                         {permissions.map((permission, index) => {
-                            const isFirstInCategory = 
+                            // console.log(permissions ,"bhhhhhhhhhhh")
+                            const isFirstInCategory =
                             index === 0 || permissions[index - 1].module !== permission.module;
-
                             return (
                             <tr key={index} className="odd:bg-gray-100">
                                 {/* Render the module name only if it's the first row of that module */}
@@ -238,7 +240,6 @@ const AssignPermission = () => {
                             );
                         })}
                         </tbody>
-
                 </table>
             </div>
             <div className="mt-4 flex justify-end">
@@ -253,3 +254,12 @@ const AssignPermission = () => {
     );
 };
 export default AssignPermission;
+
+
+
+
+
+
+
+
+

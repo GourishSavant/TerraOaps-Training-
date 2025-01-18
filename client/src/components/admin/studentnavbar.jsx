@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
 import {
   FaBars,
   FaUserCircle,
@@ -11,18 +11,46 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import chetan from "../../assets/admin/chetan.jpg"; // Replace with your actual path
+import img from "../../assets/admin/user.jpg"; // Replace with your actual path
+import axiosApi from "../../api/axiosApi.jsx";
 
 const StudentNavbar = ({ toggleStudentSidebar, isStudentSidebarOpen,  isHovered }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
 
-  const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  let flag = 0;
+
+  useEffect(() => {
+    // Fetch user data when the component mounts
+    const fetchUserData = async () => {
+     try {
+        const storedUser = localStorage.getItem("student");
+       if (storedUser) {
+         flag = 1;
+         console.log(flag);
+         const parsedUser = JSON.parse(storedUser); // Parse the string into an object
+          setUser(parsedUser);
+       }
+      } catch (error) {
+        console.error("Failed to fetch user data", error);
+   }
+   };
+   fetchUserData();
+ }, []);
+
+  const toggleProfile = () => {
+    setIsProfileOpen(!isProfileOpen);
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
     if (!isDarkMode) {
@@ -35,6 +63,20 @@ const StudentNavbar = ({ toggleStudentSidebar, isStudentSidebarOpen,  isHovered 
   const handleCalendarClick = () => navigate("/admin/calendar");
   const handleWhatsAppClick = () => window.open("https://wa.me/1234567890", "_blank");
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const handleLogout = async () => {
+    try {
+      await axiosApi.get("/auth/userLogout");
+      navigate("/user/login");
+      console.log("logout successfull")
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("student");
+  
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+ 
 
   return (
     <div className="transition-all duration-300">
@@ -133,14 +175,14 @@ const StudentNavbar = ({ toggleStudentSidebar, isStudentSidebarOpen,  isHovered 
               <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg dark:bg-gray-700">
                 <div className="flex items-center space-x-3 p-3">
                   <img
-                    src={chetan}
-                    alt="Student Profile"
+                    src={img}
+                    alt="User Profile"
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-semibold dark:text-white">Chetan</p>
+                    <p className="font-semibold dark:text-white">{user?.firstname || "FirstName"}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-300">
-                      Administrator
+                    {flag? "Parent" : "Student"}
                     </p>
                   </div>
                 </div>
@@ -151,7 +193,10 @@ const StudentNavbar = ({ toggleStudentSidebar, isStudentSidebarOpen,  isHovered 
                   <li className="px-4 py-2 text-gray-700 cursor-pointer dark:text-gray-200">
                     Settings
                   </li>
-                  <li className="px-4 py-2 text-gray-700 cursor-pointer dark:text-gray-200">
+                  <li 
+                      className="px-4 py-2 text-gray-700 cursor-pointer dark:text-gray-200"
+                      onClick={handleLogout}
+                      >
                     Log out
                   </li>
                 </ul>

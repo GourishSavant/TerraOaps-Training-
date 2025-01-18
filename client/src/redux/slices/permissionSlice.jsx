@@ -1,31 +1,30 @@
-// slices/permissionSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosApi from "../../api/axiosApi.jsx";
-
 export const fetchPermissions = createAsyncThunk(
   'permissions/fetchPermissions',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosApi.get('auth/perm/permission_cat');
       return response.data.data;
+
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
   }
 );
-
 export const fetchRolePermissions = createAsyncThunk(
   'permissions/fetchRolePermissions',
   async (roleId, { rejectWithValue }) => {
     try {
       const response = await axiosApi.get(`auth/perm/permission/${roleId}`);
+      console.log(response,"permisssion check ")
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
   }
 );
-
 export const saveRolePermissions = createAsyncThunk(
   'permissions/saveRolePermissions',
   async ({ roleId, permissions }, { rejectWithValue }) => {
@@ -38,7 +37,6 @@ export const saveRolePermissions = createAsyncThunk(
     }
   }
 );
-
 const permissionSlice = createSlice({
   name: 'permissions',
   initialState: {
@@ -96,7 +94,7 @@ const permissionSlice = createSlice({
       });
   },
 });
-
 export const { updatePermission } = permissionSlice.actions;
+
 
 export default permissionSlice.reducer;

@@ -169,8 +169,23 @@ import AddHomework from './pages/admin/AddHomeWork';
 import DailyAssignment from './pages/admin/DailyAssignment';
 import ProfilePage from './pages/admin/staffprofile';
 import EditStudent from './pages/admin/editstudent.jsx'
-import FeeDetails from './pages/admin/addfee.jsx'
-
+import FeeDetails from './pages/admin/addfee.jsx';
+// import ApplyLeave from './components/users/features/Leave/ApplyLeave.jsx';
+import StudentFees from './components/users/features/feesColletions/StudentFee.jsx';
+import StudentContentList from './components/users/features/downloadCenter/StudentContentsList.jsx';
+import StudentHomework from './components/users/features/homework/StudentHomeWork.jsx';
+import ExamSchedule from './components/users/features/Exam/ExamSchedule.jsx';
+import LessonPlan from './components/users/features/LessonPLan/StudentLessonPlan.jsx';
+import StudentNoticeBoard from './components/users/features/NoticeBoard/StudentNoticeBoard.jsx';
+import MyProfile from './components/users/features/Profile/StudentProfile.jsx';
+import TeacherReview from './components/users/features/Teacher/TeacherReview.jsx';
+import VisitorBook from './components/users/features/studentsInformation/VisitorBook.jsx';
+import BookIssued from './components/users/features/Book/BookIssued.jsx';
+import Bookpage from './components/users/features/Book/BookPage.jsx';
+import StudentLoginPage from './pages/students/StudentLoginPage.jsx';
+import StudentDashboard from './pages/students/StudentDashboard.jsx';
+import StudentAttendanceCalendar from './components/users/features/attendace/StudentAttendanceCalendar.jsx';
+import StudentOnlineExam from './components/users/features/Exam/StudentOnlineExam.jsx';
 
 const App = () => {
   return (
@@ -182,16 +197,38 @@ const App = () => {
           {/* Default route */}
           {/* Login Route */}
          <Route path="/admin/login" element={<AdminLoginPage />} />
-
+         <Route path="/user/login" element={<StudentLoginPage />} />
+         <Route path="/student/dashboard" element={<StudentDashboard />}/>
+         <Route path="/studentprofile" element={<MyProfile />} />
+         <Route path="/studentclasstimetable" element={<Classtimetable />} />
+              <Route path="/visitorbook" element={<VisitorBook />} />
+              <Route path="/applyLeave" element={<ApplyLeave />} />
+              <Route path="/studentonlineexam" element={<StudentOnlineExam />} />
+              <Route path="/studentFee" element={<StudentFees />} />
+              <Route path="/lessonplan" element={<LessonPlan/>} />
+              <Route path="/studentnoticeboard" element={<StudentNoticeBoard/>} />
+              <Route path="/teacherreview" element={<TeacherReview/>} />
+              <Route path="/studenthomework" element={<StudentHomework/>} />
+              <Route path="/studentcontentslist" element={<StudentContentList/>} />
+              <Route path="/examschedule" element={<ExamSchedule/>} />
+              <Route path="/bookpage" element={<Bookpage/>} />
+              <Route path="/bookissued" element={<BookIssued/>} />
+              <Route path="/StudentAttendanceCalendar" element={<StudentAttendanceCalendar/>} />
 
 {/* Admin Layout with nested routes */}
 {/* <Route path="/admin" element={<AdminLayout />}> */}
-            <Route
+            {/* <Route
               path="/admin/login"
               element={<AdminLoginPage />}
-            />
+            /> */}
+
             {/* Protected Route */}
+            
             <Route path="/admin" element={<AdminLayout />}>
+            {/* <Route path="/student" element={<StudentLayout />}> */}
+
+
+
               {/* <Route path="dashboard" element={<Dashboard />} /> */}
    
               {/* <Route path="dashboard" element={<Dashboard />} /> */}
@@ -204,12 +241,12 @@ const App = () => {
 
 
           <Route path="user-management" element={<Usermanagement />} />
-          <Route path="student-details" element={<AdminStudentDetails />} />
+          <Route path="Student" element={<AdminStudentDetails />} />
           <Route path="student-admission" element={<Studentadmission />} />
           <Route path="disable-student" element={<DisabledStudent />} />
           <Route path="multiclass-student" element={<MulticlassStudent />} />
           <Route path="bulk-delete" element={<Bulkdelete />} />
-          <Route path="student-categories" element={<Studentcategories />} />
+          <Route path="Student Categories" element={<Studentcategories />} />
           <Route path="disable-reason" element={<DisableReasonPage />} />
           <Route path="fee-group" element={<Feegroup/>} />
           <Route path="fee-type" element={<Feetype/>} />
@@ -221,7 +258,7 @@ const App = () => {
           <Route path="/admin/staff/:id/edit" element={<EditStaff />} />
           <Route path="/admin/staff/create" element={<CreateStaff />} />
           <Route path="import" element={<ImportStaff />} />
-          <Route path="staff-directory" element={<Staffdirectory />} />
+          <Route path=":category_name" element={<Staffdirectory />} />
           <Route path="staff/:staff_emp_id" element={<StaffProfile />} /> {/* Staff profile route */}
 
 
@@ -356,11 +393,14 @@ const App = () => {
           <Route path="AddHomeWork" element={< AddHomework/>} />
           <Route path="dailyassignment" element={<DailyAssignment/>} />
           <Route path="student" element={<StudentLayout />}>
-
+              
 
 
           </Route>
+          {/* <Route path="/student" element={<StudentLayout />}>
 
+
+          </Route> */}
 
           </Route>
           {/* Redirecting to home if no route matches */}
