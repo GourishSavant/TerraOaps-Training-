@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "/src/context/AuthContext";
+import { useAuth } from "../../../context/AuthContext.jsx";
 const NotAuthorizedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth(); // Check authentication state
   const location = useLocation(); // Get current location

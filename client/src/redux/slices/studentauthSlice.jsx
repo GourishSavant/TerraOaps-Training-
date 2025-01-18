@@ -80,12 +80,14 @@ export const loginStudent = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
+      // Capture and provide a fallback error message
       return rejectWithValue(
-        error.response?.data?.error || "Login failed. Please try again."
+        error.response?.data?.error || "An unexpected error occurred. Please try again."
       );
     }
   }
 );
+
 
 const initialState = {
   accessToken: localStorage.getItem("accessToken") || null,
